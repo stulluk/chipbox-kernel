@@ -1,8 +1,11 @@
 # CHIPBOX Linux Kernel
 
-This is the linux kernel for Chipbox satellite receiver.
+This is the linux kernel for Chipbox DVBS2 HD satellite receiver.
 
-[What is "Chipbox"](https://gitlab.com/chipbox/about-chipbox)
+[What is "Chipbox"](https://www.drejo.com/blog/chipbox/)
+[Some more details about chipbox](https://gitlab.com/stulluk/chipbox-pars)
+[Even more data](https://www.drejo.com/blog/chipbox/)
+
 
 ## Prequisities & Building
 
@@ -11,7 +14,7 @@ This is the linux kernel for Chipbox satellite receiver.
 https://gitlab.com/stulluk/chipbox-pars/-/tree/main/crosstool/gcc-3.4.6-glibc-2.3.6/arm-linux
 - Clone that repository and add this toolchain to your $PATH ( this will give you arm-linux-gcc )
 - As of writing this README, I tried almost all toolchains out there, none of them can 
-compile a simple printf("hello,world\n") statically, allways return segmentation fault. I don't know why.
+compile a simple printf("hello,world\n") statically, allways return segmentation fault. I don't know why. I will continue investigating.
 - There are two convenience shell scripts in this dir: ```ba``` (to build) and ```ca``` (to clean)
 - .gitignore is up to date
 - .config is included and works on the real hardware
@@ -22,9 +25,10 @@ arch/arm/boot/uImage: u-boot legacy uImage, Linux-2.6.12.5, Linux/ARM, OS Kernel
 stulluk /tmp/chipbox-kernel (master) $
 ```
 
-## Running
+## Running / trying kernel via TFTP
 
 - Setup a TFTPD server on your ubuntu host
+- Connect to Chipbox via RS232 , use minicom (1152008n1)
 - On Chipbox, enter u-boot shell by pressing enter just after you power on
 - Then execute followings:
 ```
