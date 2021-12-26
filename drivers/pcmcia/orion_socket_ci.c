@@ -1,0 +1,569 @@
+/* 
+ *  Linux Module driver of PCMCIA socket for CI protocol stack
+ */
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h> 
+#include <linux/major.h>
+#include <linux/string.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/fcntl.h>
+#include <linux/sched.h>
+#include <linux/smp_lock.h>
+#include <linux/timer.h>
+#include <linux/ioctl.h>
+#include <linux/proc_fs.h>
+#include <linux/poll.h>
+#include <linux/pci.h>
+#include <linux/fs.h>
+#include <linux/config.h>
+#include <linux/cpufreq.h>
+#include <linux/ioport.h>
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/time.h>
+#include <linux/timer.h>
+
+#include <asm/hardware.h>
+#include <asm/io.h>
+#include <asm/irq.h>
+#include <asm/system.h>
+
+#include <pcmcia/cs_types.h>
+#include <pcmcia/ss.h>
+#include <pcmcia/bulkmem.h>
+#include <pcmcia/cistpl.h>
+
+#include "cs_internal.h"
+#include "soc_common.h"
+#include "orion_socketbase.h"
+
+#define DRV_READCOMM   0  // Read common space, not used
+#define DRV_WRITECOMM  1  // Write common space, not used
+#define DRV_READMEM    2  // Read attr memory
+#define DRV_WRITEMEM   3  // Write arrt memory
+#define DRV_READIO     4  // Read a I/O Register
+#define DRV_WRITEIO    5  // Write a I/O Register
+#define DRV_TSIGNAL    6  // Check a Signal
+#define DRV_SSIGNAL    7  // Set / Clear a Signal
+#define DRV_DBG_TOGGLE 100
+
+/* Signal number for DRV_TSIGNAL command */
+#define DRV_CARD_DETECT	1
+#define DRV_READY_BUSY	2
+
+/* Signal number for DRV_SSIGNAL command */
+#define DRV_EMSTREAM    0
+#define DRV_ENSLOT      1
+#define DRV_RSTSLOT     2
+#define DRV_IOMEM       6
+#define DRV_SLOTSEL     7
+
+#define GPIO_READ 0
+#define GPIO_WRITE 1
+
+static int SOCKET_CI_DEBUG = 0;
+#define DBG(format, args...)\
+do {\
+if (SOCKET_CI_DEBUG) {\
+    printk(format, ## args);}\
+}while(0)
+
+
+/*------ structures for ioctl--------------*/ 
+
+typedef struct {
+    unsigned short addr;    /* I/O Base Address       */
+} DRV_stAddr;  	        /* structure for DRV_ADDR */
+
+typedef struct {
+    unsigned short addr;    /* address to read/write                     */
+    unsigned short len;     /* number of bytes to read/write             */
+    unsigned char *pbytes;  /* pointer to bytes to read/write            */
+    unsigned short rlen;    /* number of bytes actually read/write       */
+} DRV_stMem;               /* structure for DRV_READMEM and DRV_WRITEMEM commands */
+
+
+typedef struct {
+    unsigned short registr; /* register addresse to read/write		*/
+    unsigned char *pvalue;  /* pointer to the value to read/write	*/
+} DRV_stIO;                /* structure for DRV_READIO and DRV_WRITEIO commands */
+
+
+typedef struct {
+    unsigned char sig;      /* signal number */
+    unsigned char value;    /* value(1 : signal present ; 0 missing)*/
+} DRV_stSignal;	        /* structure for DRV_TSIGNAL command	*/
+
+
+typedef struct {
+    unsigned char pin;      /* pin code                          */
+    unsigned char cs;       /* value(1 : Set ; 0 clear)          */
+} DRV_ssSignal;           /* structure for DRV_SSIGNAL command */
+
+
+union Uiost{
+    DRV_stAddr iobase;  	/* structure for DRV_ADDR */
+    DRV_stMem mem;          /* structure for DRV_READMEM and DRV_WRITEMEM commands */
+    DRV_stIO io;            /* structure for DRV_READIO and DRV_WRITEIO commands */
+    DRV_stSignal rsig;	    /* structure for DRV_TSIGNAL command	*/
+    DRV_ssSignal wsig;      /* structure for DRV_SSIGNAL command */
+};
+
+
+void fastcall iowrite32(u32 val, void __iomem *addr);
+unsigned int fastcall ioread8(void __iomem *addr);
+void fastcall iowrite8(u8 val, void __iomem *addr);
+unsigned int fastcall ioread16(void __iomem *addr);
+void fastcall iowrite16(u16 val, void __iomem *addr);
+unsigned short gpio_hw_read(int gpio_id);
+int gpio_hw_write(int gpio_id, unsigned short data);
+int gpio_hw_set_direct(int gpio_id, int dir);
+void msleep(unsigned int msecs);
+
+extern struct semaphore ebi_mutex_lock;
+
+static void orion_socket_ci_set_cis_rmode(void)
+{
+    iowrite32(0x00,(void*)OPMODE);			
+    iowrite32(0x2E1, (void*)TIMECFG);			
+}
+
+
+static void orion_socket_ci_set_cis_wmode(void)
+{
+    iowrite32(0x00, (void*)OPMODE);			
+    iowrite32(0x04A1, (void*)TIMECFG);			
+}
+
+
+static void orion_socket_ci_set_comm_rmode(void)
+{
+    iowrite32(0x02, (void*)OPMODE);			
+    iowrite32(0x2E1, (void*)TIMECFG);			
+}
+
+
+static void orion_socket_ci_set_comm_wmode(void)
+{
+    iowrite32(0x02, (void*)OPMODE);			
+    iowrite32(0x04A1, (void*)TIMECFG);			
+}
+
+
+static void orion_socket_ci_set_io_mode(void)
+{
+    iowrite32(0x04, (void*)OPMODE);			
+    iowrite32(0x7FFF, (void*)TIMECFG);			
+}
+
+
+static unsigned char orion_socket_ci_read_cis(unsigned int addr)
+{
+    unsigned char val = 0;
+
+    DBG("Kernel >> reading CIS, addr : %x", addr);
+    iowrite32(((addr >> 8) & 0x3F), (void*)ATTRBASE);
+    val = ioread8((void*)(VA_PCMCIA_BASE + (addr & 0xFF)));
+    DBG(", val : %02x\n", val);
+    
+    return val;
+}
+
+
+static unsigned char orion_socket_ci_read_comm(unsigned int addr)
+{
+    unsigned char val = 0;
+    iowrite32(((addr >> 8) & 0x3F), (void*)COMMBASE);
+    val = ioread8((void*)(VA_PCMCIA_BASE + (addr & 0xFF)));
+
+    return val;
+}
+
+
+static unsigned char orion_socket_ci_read_io(unsigned int addr)
+{
+    unsigned char val = 0;
+    iowrite32(((addr >> 8) & 0x3F), (void*)IOBASE);
+    val = ioread8((void*)(VA_PCMCIA_BASE + (addr & 0xFF)));
+
+    return val;
+}
+
+
+static void orion_socket_ci_write_cis(unsigned char val, unsigned int addr)
+{
+    iowrite32(((addr >> 8) & 0x3F), (void*)ATTRBASE);
+    iowrite8(val, (void*)(VA_PCMCIA_BASE + (addr & 0xFF)));
+}
+
+
+static void orion_socket_ci_write_comm(unsigned char val, unsigned int addr)
+{
+    iowrite32(((addr >> 8) & 0x3F), (void*)COMMBASE);
+    iowrite8(val, (void*)(VA_PCMCIA_BASE + (addr & 0xFF)));
+}
+
+
+static void orion_socket_ci_write_io(unsigned char val, unsigned int addr)
+{
+    iowrite32(((addr >> 8) & 0x3F), (void*)IOBASE);
+    iowrite8(val, (void*)(VA_PCMCIA_BASE + (addr & 0xFF)));
+}
+
+
+static int orion_socket_ci_open (struct inode *inode, struct file *filp)
+{
+    return 0;
+}
+
+
+static int orion_socket_ci_ioctl (struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
+{
+    void __user *uarg = (char __user *)arg;
+    union Uiost iost; 
+    int i = 0;
+    unsigned char *buf;
+    int ret = 0;
+
+    down(&ebi_mutex_lock);
+
+    switch (cmd) {
+        case DRV_READMEM:
+        {
+            DRV_stMem* attr = &(iost.mem);
+            
+            orion_socket_ci_set_cis_rmode();
+            if (copy_from_user((char *)attr, uarg, sizeof(*attr))) {
+                ret = -EFAULT;
+                break;
+            }
+            
+            buf = (unsigned char *)kmalloc(attr->len, GFP_KERNEL);
+            if (NULL == buf) {
+                ret = -ENOMEM;
+                break;
+            }
+            
+            for (i = 0; i < attr->len; i++) {
+                buf[i] = orion_socket_ci_read_cis(attr->addr + 2*i);
+            }
+            attr->rlen = attr->len;
+            
+            if (copy_to_user(attr->pbytes, buf, attr->rlen)) {
+                ret = -EFAULT;
+            }
+            if (copy_to_user(uarg, attr, sizeof(*attr))) {
+                ret = -EFAULT;
+            }
+            kfree(buf);
+        }
+        break;
+        case DRV_WRITEMEM:
+        {
+            DRV_stMem* attr = &(iost.mem);
+            
+            orion_socket_ci_set_cis_wmode();
+            if (copy_from_user(attr, uarg, sizeof(*attr))) {
+                ret = -EFAULT;
+                break;
+            }
+            buf = (unsigned char *)kmalloc(attr->len, GFP_KERNEL);
+            if (NULL == buf) {
+                ret = -ENOMEM;
+                break;
+            }
+            if (copy_from_user(buf, attr->pbytes, attr->len)) {
+                kfree(buf);
+                ret = -EFAULT;
+                break;
+            }
+            
+            for (i = 0; i < attr->len; i++) {
+                orion_socket_ci_write_cis(buf[i], (attr->addr + i));
+            }
+            kfree(buf);
+        }
+        break;
+        case DRV_READCOMM:
+        {
+            DRV_stMem* comm = &(iost.mem);
+
+            orion_socket_ci_set_comm_rmode();
+            if (copy_from_user(comm, uarg, sizeof(*comm))){
+                ret = -EFAULT;
+                break;
+            }
+            buf = (unsigned char *)kmalloc(comm->len, GFP_KERNEL);
+            if (NULL == buf) {
+                ret = -ENOMEM;
+                break;
+            }
+            
+            for (i = 0; i < comm->len; i++) {
+                buf[i] = orion_socket_ci_read_comm(comm->addr + i);
+            }
+            comm->rlen = comm->len;
+
+            if (copy_to_user(comm->pbytes, buf, comm->rlen)) {
+                ret = -EFAULT;
+            }
+            if (copy_to_user(uarg, comm, sizeof(*comm))) {
+                ret = -EFAULT;
+            }
+            kfree(buf);
+        }
+        break;
+        case DRV_WRITECOMM:
+        {
+            DRV_stMem* comm = &(iost.mem);
+            
+            orion_socket_ci_set_comm_wmode();
+            if (copy_from_user((char *)comm, uarg, sizeof(*comm))) {
+                ret = -EFAULT;
+                break;
+            }
+            buf = (unsigned char *)kmalloc(comm->len, GFP_KERNEL);
+            if (NULL == buf) {
+                ret = -ENOMEM;
+                break;
+            }
+            if (copy_from_user(buf, comm->pbytes, comm->len)) {
+                kfree(buf);
+                ret = -ENOMEM;
+                break;
+            }
+            
+            for (i = 0; i < comm->len; i++) {
+                orion_socket_ci_write_comm(buf[i], comm->addr);
+            }
+            kfree(buf);
+        }
+        break;
+        case DRV_READIO:
+        {
+            DRV_stIO* io = &(iost.io);
+            
+            unsigned char val;
+            orion_socket_ci_set_io_mode();
+            if (copy_from_user((void *)io, uarg, sizeof(*io))) {
+                ret = -EFAULT;
+                break;
+            }
+            val = orion_socket_ci_read_io(io->registr);
+            if (copy_to_user(io->pvalue, &val, 1)) {
+                ret = -EFAULT;
+                break;
+            }
+        }
+        break;
+        case DRV_WRITEIO:
+        {
+            char val;
+            DRV_stIO* io = &(iost.io);
+             
+            orion_socket_ci_set_io_mode();
+            if (copy_from_user((char *)io, uarg, sizeof(*io))) {
+                ret = -EFAULT;
+                break;
+            }
+            if (copy_from_user((char *)&val, io->pvalue, 1)) {
+                ret = -EFAULT;
+                break;
+            }
+            orion_socket_ci_write_io(val, io->registr);
+        }        
+        break;
+        case DRV_TSIGNAL:
+        {
+            DRV_stSignal* rsig = &(iost.rsig);
+            if (copy_from_user((char *)rsig, uarg, sizeof(*rsig))) {
+                ret = -EFAULT;
+                break;
+            }
+            rsig->value = 0;
+            
+            switch (rsig->sig) {
+                case DRV_CARD_DETECT :
+                {
+                    unsigned short rawstat, pinctl;
+
+                    rawstat = ioread16((void*)RAWSTAT);
+                    pinctl = ioread16((void*)PINCTL);
+
+                    /* 
+                     * INT_CDCHG : This bit is set if either of the Card Detect signals, CD1_N or CD2_N, changes level and the 
+                     * corresponding bit in the INTENA register isset.
+                     */
+                    if((rawstat & INT_CDCHG) && ((PIN_CD1 | PIN_CD2) & pinctl)) {
+                        rsig->value = 1;
+                    } 
+                }
+                break;
+                case DRV_READY_BUSY :
+                {
+
+                }
+                break;                
+                default:
+                {
+            	    return -EIO; 
+                }
+                break;
+            }
+
+            if (copy_to_user(uarg, (char *)rsig, sizeof(*rsig))) {
+                ret = -EFAULT;
+            }
+        }
+        break;
+        case DRV_SSIGNAL:
+        {
+            DRV_ssSignal* wsig = &(iost.wsig);
+            if (copy_from_user((char *)wsig, uarg, sizeof(*wsig))) {
+                ret = -EFAULT;
+                break;
+            }
+            
+            switch (wsig->pin) {
+                case DRV_EMSTREAM :
+                {
+                    
+                }
+                break;
+                case DRV_RSTSLOT :
+                {
+
+                }
+                break;
+
+                case DRV_ENSLOT :
+                case DRV_IOMEM :
+                case DRV_SLOTSEL :
+                break;
+                default:
+                {
+            	    ret = -EIO; 
+                }
+                break;                    
+            }
+        }
+        break;
+        case DRV_DBG_TOGGLE:
+        {
+            if (uarg == 0) {
+                SOCKET_CI_DEBUG = 0;
+            } else {
+                SOCKET_CI_DEBUG = 1;
+            }
+        }        
+        break;
+        default:
+        {
+    	    ret = -EIO; 
+        }
+        break;
+    }
+    
+    up(&ebi_mutex_lock);
+    return ret;
+}
+
+
+static int orion_socket_ci_release(struct inode *inode, struct file *file)
+{
+    return 0;
+}
+
+
+static struct file_operations orion_socket_ci_fops = {
+    .owner   =  THIS_MODULE,
+    .open    =  orion_socket_ci_open,
+    .ioctl   =  orion_socket_ci_ioctl,
+    .release =  orion_socket_ci_release,
+};
+
+static int  major_dev = -1;
+
+
+static int __init orion_socket_ci_hw_init(void)
+{
+    iowrite16(0x1000, (void*)WAITTMR);	//FIXME default time out error while reading & writing
+}
+
+
+static int __init orion_socket_ci_probe(struct device *dev)
+{
+    orion_socket_ci_hw_init();
+
+    major_dev = register_chrdev(0, "orion_socket_ci", &orion_socket_ci_fops);
+    if (major_dev < 0) {
+        printk(KERN_NOTICE "unable to find a free device for Driver Services (error=%d)\n", major_dev);
+        major_dev = -1;
+    }
+   
+    return 0;
+}
+
+
+static int orion_socket_ci_remove(struct device *dev)
+{
+	if (major_dev != -1) {
+        unregister_chrdev(major_dev, "orion_socket_ci");
+    }
+    
+    return 0;
+}
+
+
+static struct device_driver orion_pcmcia_socket_driver = {
+	.probe		= orion_socket_ci_probe,
+	.remove		= orion_socket_ci_remove,
+	.suspend 	= NULL,
+	.resume 	= NULL,
+	.name		= "orion_socket_ci",
+	.bus		= &platform_bus_type,
+};
+
+
+static struct platform_device orion_pcmcia_socket_device = {
+	.name   = "orion_socket_ci",
+	.id     = 0,
+};
+
+
+static int __init orion_socket_ci_mod_init(void)
+{
+	int ret = 0;
+
+    printk("orion socket ci module initializing!!!\n");
+
+	ret = driver_register(&orion_pcmcia_socket_driver);
+
+	if (!ret) {
+		ret = platform_device_register(&orion_pcmcia_socket_device);
+		if (ret)
+			driver_unregister(&orion_pcmcia_socket_driver);
+	}
+
+	return ret;
+}
+
+
+static void __exit orion_socket_ci_mod_exit(void)
+{
+	platform_device_unregister(&orion_pcmcia_socket_device);
+	driver_unregister(&orion_pcmcia_socket_driver);
+}
+
+
+module_init(orion_socket_ci_mod_init);
+module_exit(orion_socket_ci_mod_exit);
+
+MODULE_AUTHOR("LICHQ");
+MODULE_DESCRIPTION("PCMCIA SOCKET DRIVER FOR CI");
+MODULE_LICENSE("GPL");
+

@@ -1,0 +1,1 @@
+#define CONFIG_DPB0_SIZE 0x2500000

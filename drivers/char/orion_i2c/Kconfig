@@ -1,0 +1,98 @@
+#
+# Character device configuration
+# Author: Sun He <he.sun@celestialsemi.cn>
+#
+
+menu "ORION I2C driver"
+
+config ORION_I2C
+       tristate "ORION platform I2C driver"
+
+config ORION_I2C_1200
+       tristate "ORION platform I2C driver for CSM1200"
+       depends on ARCH_ORION_CSM1200 && ORION_I2C
+
+config ORION_I2C_1201
+       tristate "ORION platform I2C driver for CSM1201"
+       depends on ARCH_ORION_CSM1201 && ORION_I2C
+
+config ORION_I2C_DEBUG
+	bool "I2C Debugging"
+        depends on ORION_I2C
+	help
+	  This turns on low-level debugging for the ORION I2C driver.
+	  Normally, you should say 'N'.
+
+
+config I2C_DEBUG_VERBOSE
+	int "Debugging verbosity (0 = quiet, 3 = noisy)"
+	depends on ORION_I2C_DEBUG
+	default "0"
+	help
+	  Determines the verbosity level of the I2C debugging messages.
+
+config ORION_I2C_FASTSPEED
+       bool "Support I2C fastspeed (400KHZ)"
+       depends on ORION_I2C
+       help
+         If all on-board I2C device support fastspeed, say Y here, otherwise
+         say N.
+
+config ORION_I2C_EEPROM
+       bool "Support I2C EEPROM"
+        depends on ORION_I2C
+       help
+         Seperate EEPROM kernel device driver. Although I2C EEPROM can be accessed
+	 though I2C device driver, this driver provides a simple read/write interface
+         for application.
+
+config ORION_I2C_EEPROM_CHIP_1_ADDR
+       hex  "EEPROM i2c address"
+       depends on ORION_I2C_EEPROM
+       default 0x50
+
+# ehnus BEGIN
+config ORION_I2C_MULTI_EEPROMS
+       bool "Support MULTI EEPROM on I2C"
+       depends on ORION_I2C_EEPROM
+       help
+         Seperate EEPROM kernel device driver. For the second eeprom read/write.
+
+config ORION_I2C_EEPROM_CHIP_2_ADDR
+       hex  "Second EEPROM i2c address"
+       depends on ORION_I2C_EEPROM && ORION_I2C_MULTI_EEPROMS
+       default 0x54
+
+config ORION_I2C_EEPROM_2_SUBADDR_LEN
+       int  "Second EEPROM sub address length (in bytes)"
+       depends on ORION_I2C_EEPROM && ORION_I2C_MULTI_EEPROMS
+       default 2
+
+config ORION_I2C_EEPROM_2_PAGE_SIZE
+       int  "Second EEPROM page size (in bytes)"
+       depends on ORION_I2C_EEPROM && ORION_I2C_MULTI_EEPROMS
+       default 256
+
+config ORION_I2C_EEPROM_2_SLEEP_TIME
+       int  "Second EEPROM wait time after write (in milliseconds)."
+       depends on ORION_I2C_EEPROM && ORION_I2C_MULTI_EEPROMS
+       default 5
+# ehnus END
+
+config ORION_I2C_EEPROM_SUBADDR_LEN
+       int  "EEPROM sub address length (in bytes)"
+       depends on ORION_I2C_EEPROM
+       default 2
+
+config ORION_I2C_EEPROM_PAGE_SIZE
+       int  "EEPROM page size (in bytes)"
+       depends on ORION_I2C_EEPROM
+       default 32
+
+config ORION_I2C_EEPROM_SLEEP_TIME
+       int  "EEPROM wait time after write (in milliseconds)."
+       depends on ORION_I2C_EEPROM
+       default 5
+
+endmenu
+

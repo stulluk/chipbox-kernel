@@ -1,0 +1,1 @@
+#define CONFIG_ORION_SCI 1

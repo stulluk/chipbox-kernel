@@ -1,0 +1,1 @@
+#define CONFIG_AUD_SIZE 0x100000

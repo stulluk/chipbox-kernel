@@ -1,0 +1,1 @@
+#define CONFIG_FPE_NWFPE_XP 1

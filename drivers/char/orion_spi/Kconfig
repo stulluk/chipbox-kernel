@@ -1,0 +1,55 @@
+#
+menu "Orion SPI devices"
+
+config ORION_SPI
+	depends on !MTD_SPIDEV
+	tristate "ORION platform SPI driver"
+
+config ORION_SPI_DEBUG
+       	depends on ORION_SPI
+	bool "Debug SPI driver!"
+
+config SLAVE_SPEED
+	hex "Slave Devices BAUD Rate"
+       	depends on ORION_SPI
+       	default 0x1
+       	help
+	  Default, 1024K
+			0x0		500K
+			0x1		1MH
+			0x2		2MH
+			0x3		3MH
+			0x4		4MH
+			0x5		5MH
+choice
+	prompt "Spi device choice"
+	depends on ORION_SPI
+	default SPI_COMMON
+
+config SPI_COMMON
+	bool "Support for interrupt based I/O operation"
+config SFLASH
+	bool "Support for serial flash"
+endchoice
+
+config FLASH_ALEN
+       	hex  "Slave Device address length"
+       	depends on ORION_SPI && SFLASH
+       	default 0x3
+	help
+	  Slave bit width	
+
+config FLASH_SIZE
+       	hex  "Slave Device capacity"
+       	depends on ORION_SPI && SFLASH
+       	default 0x80000
+	help
+	  Slave bit width	
+
+config SPI_FIP6311
+	bool "spi fip6311 support"
+	depends on ORION_SPI
+	help
+	  Spi fip6311 support
+
+endmenu

@@ -1,0 +1,12 @@
+#
+menu "CSM1200 A/V devices"
+
+config VIDEO_SUPPORT
+	tristate "Video decoder Support"
+
+config TVE_SUPPORT
+	tristate "TVE Support"
+	depends on ARCH_ORION_CSM1200
+
+endmenu
+

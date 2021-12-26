@@ -1,0 +1,32 @@
+#
+# TPM device configuration
+#
+
+menu "Orion1.4 Xport devices"
+
+config XPORT_SUPPORT
+	tristate "XPORT Support"
+	---help---
+	  Orion1.4 function suport.
+
+config XPORT_BIG_DMABUFFER
+       bool "Support Big DMA buffer for playing high bitrates streams."
+       depends on XPORT_SUPPORT
+
+config ORION_XPORT_DEBUG
+	bool "Debugging"
+	depends on XPORT_SUPPORT
+	help
+	  This turns on low-level debugging for the ORION XPORT driver.
+	  Normally, you should say 'N'.
+
+
+config XPORT_DEBUG_VERBOSE
+	int "Debugging verbosity (0 = quiet, 3 = noisy)"
+	depends on ORION_XPORT_DEBUG
+	default "0"
+	help
+	  Determines the verbosity level of the XPORT debugging messages.
+
+endmenu
+

@@ -1,0 +1,1 @@
+#undef CONFIG_ORION_SCI_DEBUG

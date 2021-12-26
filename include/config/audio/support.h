@@ -1,0 +1,1 @@
+#define CONFIG_AUDIO_SUPPORT 1

@@ -1,0 +1,39 @@
+choice
+        prompt "ORION Series SoC Version"
+	depends on ARCH_CELESTIAL_ORION
+        default ARCH_ORION_CSM1200
+
+config ARCH_ORION_CSM1100
+        bool "CSM1100 SoC"
+	help
+	  CSM1100 is the MPEG2-based DTV SoC from
+          Celestial Semiconductor.
+
+config ARCH_ORION_CSM1200
+        bool "CSM1200 SoC"
+	help 
+	  CSM1200 is the MPEG2/H.264 IPTV/DTV SoC
+          from Celestial Semiconductor.
+config ARCH_ORION_CSM1200_J
+        bool "CSM1200J SoC for SD"
+        depends on ARCH_ORION_CSM1200
+        default n
+    help 
+	  CSM1200J is the MPEG2/H.264 IPTV/DTV SoC for SD Video
+          from Celestial Semiconductor.
+
+config ARCH_ORION_CSM1201
+        bool "CSM1201 SoC"
+	help 
+	  CSM1201 is the MPEG2/H.264 IPTV/DTV SoC
+          from Celestial Semiconductor.
+config ARCH_ORION_CSM1201_J
+        bool "CSM1201J SoC for SD"
+        depends on ARCH_ORION_CSM1201
+        default n
+    help 
+	  CSM1201J is the MPEG2/H.264 IPTV/DTV SoC for SD Video
+          from Celestial Semiconductor.
+endchoice
+
+

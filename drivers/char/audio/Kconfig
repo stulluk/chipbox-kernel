@@ -1,0 +1,13 @@
+#
+# TPM device configuration
+#
+
+menu "Orion1.4 Audio devices"
+
+config AUDIO_SUPPORT
+	tristate "AUDIO Support"
+	---help---
+	  Orion1.4 audio function suport.
+
+endmenu
+

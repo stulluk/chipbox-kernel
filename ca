@@ -1,0 +1,2 @@
+make clean
+make csm1201_norboot_flash_256M_32Mflashmode_defconfig

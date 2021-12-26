@@ -1,0 +1,1 @@
+/* Empty config file.  Use CFG to get a real one. */

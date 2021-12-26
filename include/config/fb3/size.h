@@ -1,0 +1,1 @@
+#define CONFIG_FB3_SIZE 0x400000

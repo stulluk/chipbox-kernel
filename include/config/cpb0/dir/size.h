@@ -1,0 +1,1 @@
+#define CONFIG_CPB0_DIR_SIZE 0x9000

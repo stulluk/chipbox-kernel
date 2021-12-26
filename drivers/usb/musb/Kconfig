@@ -1,0 +1,51 @@
+#
+# INVENTRA USB Host Controller Drivers
+#
+# $Revision: 1.1.1.1 $
+#
+	  
+config USB_INVENTRA_HCD
+	depends on USB
+	tristate 'MUSB Controller Support'
+	help
+	  Say Y here if you have the MUSB controller on your system.
+	  If you do not know what this is, please say N.
+	  To compile this driver as a module, choose M here.
+	  
+choice
+prompt "Controller Mode"
+depends on USB_INVENTRA_HCD 
+default USB_INVENTRA_HCD_HOST
+
+config USB_INVENTRA_HCD_HOST
+	bool 'Host Mode'
+
+endchoice
+
+config USB_INVENTRA_STATIC_CONFIG
+	depends on USB_INVENTRA_HCD
+	bool 'Use static config (-DMUSB_STATIC_CONFIG)'
+	default true
+	help
+	  Use the static configuration file. File must be called
+	  hdrc_cnf.h and must be generated from the board configuration
+	  file. Please check directory install/configs for examples.
+	  If usure please say please say N and make sure your controller 
+	  is not using dynamic FIFO sizing.
+
+config USB_INVENTRA_DMA
+	depends on USB_INVENTRA_HCD
+	bool 'Use DMA when possible (-DMUSB_DMA)'
+	default true
+	help
+	  Enable DMA transfers when DMA is possible
+
+config	USB_INVENTRA_HCD_LOGGING
+	depends on USB_INVENTRA_HCD
+	int  'Logging Level (0 - none / 3 - annoying)'
+	default 0 
+	help
+	  Set the logging level. 0 disable the debugging altogether (no 
+	  code will be added to the)
+          If you do not know what this is, please say N.	  
+
