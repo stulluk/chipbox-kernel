@@ -162,3 +162,21 @@ x509.genkey
 # Documentation toolchain
 sphinx_*/
 
+arch/arm/boot/Image
+arch/arm/boot/compressed/vmlinux
+arch/arm/boot/compressed/vmlinux.lds
+arch/arm/boot/uImage
+arch/arm/boot/zImage
+arch/arm/kernel/vmlinux.lds
+drivers/char/consolemap_deftbl.c
+drivers/char/defkeymap.c
+include/asm-arm/arch
+include/asm-arm/constants.h
+include/asm-arm/mach-types.h
+include/linux/compile.h
+kernel/config_data.h
+lib/crc32table.h
+lib/gen_crc32table
+usr/gen_init_cpio
+usr/initramfs_data.cpio
+usr/initramfs_list
