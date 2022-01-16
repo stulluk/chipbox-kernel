@@ -1,1 +1,0 @@
-#define CONFIG_PCMCIA_ORION 1

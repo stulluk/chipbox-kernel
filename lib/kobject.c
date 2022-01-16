@@ -71,12 +71,11 @@ static int get_kobj_path_length(struct kobject *kobj)
 	 * Add 1 to strlen for leading '/' of each level.
 	 */
 	do {
-			if (kobject_name(parent) == NULL)		/* modified by sunbin 20090427*/
-				return 0;
-			length += strlen(kobject_name(parent)) + 1;
-			parent = parent->parent;
+		if (kobject_name(parent) == NULL)		/* modified by sunbin 20090427*/
+			return 0;
+		length += strlen(kobject_name(parent)) + 1;
+		parent = parent->parent;
 	} while (parent);
-
 	return length;
 }
 

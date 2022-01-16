@@ -1,1 +1,0 @@
-#define CONFIG_ORION_WDT 1

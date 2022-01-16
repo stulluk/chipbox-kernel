@@ -260,7 +260,7 @@ static int __init check_initrd(struct meminfo *mi)
 	}
 
 	if (initrd_node == -1) {
-  		printk(KERN_ERR "initrd (0x%08lx - 0x%08lx) extends beyond "
+		printk(KERN_ERR "initrd (0x%08lx - 0x%08lx) extends beyond "
 		       "physical memory - disabling initrd\n",
 		       phys_initrd_start, end);
 		phys_initrd_start = phys_initrd_size = 0;

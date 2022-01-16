@@ -95,7 +95,7 @@ struct cpu_cache_fns cpu_cache;
 char elf_platform[ELF_PLATFORM_SIZE];
 EXPORT_SYMBOL(elf_platform);
 
-unsigned long phys_initrd_start __initdata = 0;	
+unsigned long phys_initrd_start __initdata = 0;
 unsigned long phys_initrd_size __initdata = 0;
 
 static struct meminfo meminfo __initdata = { 0, };
@@ -703,6 +703,7 @@ void __init setup_arch(char **cmdline_p)
 			squash_mem_tags(tags);
 		parse_tags(tags);
 	}
+
 	init_mm.start_code = (unsigned long) &_text;
 	init_mm.end_code   = (unsigned long) &_etext;
 	init_mm.end_data   = (unsigned long) &_edata;

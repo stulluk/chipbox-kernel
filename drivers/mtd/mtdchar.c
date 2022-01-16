@@ -572,8 +572,7 @@ static void __exit cleanup_mtdchar(void)
 {
 	mtdchar_devfs_exit();
 	class_simple_destroy(mtd_class);
-    unregister_chrdev(MTD_CHAR_MAJOR, "mtd");
-   
+	unregister_chrdev(MTD_CHAR_MAJOR, "mtd");
 }
 
 module_init(init_mtdchar);

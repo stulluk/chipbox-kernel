@@ -1,1 +1,0 @@
-#define CONFIG_SERIAL_8250_ORION 1

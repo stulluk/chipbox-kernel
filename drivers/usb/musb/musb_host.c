@@ -274,17 +274,17 @@ static inline uint8_t* get_urb_buffer(struct urb* pUrb)
                 return NULL;
         }
    /*     if (pUrb->transfer_flags & URB_NO_TRANSFER_DMA_MAP) {
-		
+
                 pBuffer=(void*)phys_to_virt(pUrb->transfer_dma);
-			
+
         } else */{
                 pBuffer=pUrb->transfer_buffer;
-	
+
         }
 
  //       if ( !pBuffer ) {
  //               pBuffer=(void*)phys_to_virt(pUrb->transfer_dma);
-			
+
  //       }
 
         return pBuffer;
@@ -330,7 +330,7 @@ static void mgc_hdrc_program_end(MGC_LinuxCd* pThis, uint8_t bEnd,
 	uint8_t bReFlags=FALSE;
 	MGC_DmaChannel* pDmaChannel;
 	MGC_DmaController* pDmaController;
-#endif	
+#endif
 
         DEBUG_CODE(2, printk(KERN_INFO "=> %s(bEnd=%d, pUrb=%lx, transfer_dma=%lx, nOut=%d, dwLength=%d)\n", \
                              __FUNCTION__, bEnd, (unsigned long)pUrb, pUrb->transfer_dma, nOut, dwLength); )
@@ -384,7 +384,7 @@ static void mgc_hdrc_program_end(MGC_LinuxCd* pThis, uint8_t bEnd,
                 }
         } else {
                 nOut = 1;
-	
+
                 if (pUrb->interval > 16) {
                         /* correct interval */
                         bInterval = mgc_find_first_one(pUrb->interval);
@@ -429,7 +429,7 @@ static void mgc_hdrc_program_end(MGC_LinuxCd* pThis, uint8_t bEnd,
         spin_lock_irqsave(&pThis->Lock, flags);
 
         MGC_SelectEnd(pBase, bEnd);
-	wCsr = MGC_ReadCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd);        
+	wCsr = MGC_ReadCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd);
 
         if (nOut) {
                 /* transmit */
@@ -512,10 +512,10 @@ if(bWantDMA)
 			spin_unlock_irqrestore(&pThis->Lock, flags);
 			return;
 		}
-				 
+
 	if(pDmaController && !pDmaChannel) {
 			pDmaChannel = pEnd->pDmaChannel = pDmaController->pfDmaAllocateChannel(
-				pDmaController->pPrivateData, bEnd, nOut ? TRUE : FALSE, 
+				pDmaController->pPrivateData, bEnd, nOut ? TRUE : FALSE,
 				bStdType, wPacketSize);
 		}
 
@@ -528,8 +528,8 @@ if(bWantDMA)
 			(pDmaChannel->bDesiredMode ? (MGC_M_TXCSR_AUTOSET| MGC_M_TXCSR_DMAMODE) : 0));
 		pDmaChannel->dwActualLength = 0L;
 		pEnd->dwRequestSize = min(dwLength, pDmaChannel->dwMaxLength);
-		bDmaOk = pDmaController->pfDmaProgramChannel(pDmaChannel, 
-			wPacketSize, pDmaChannel->bDesiredMode, (uint8_t*)(pUrb->transfer_dma) /*pBuffer*/, 
+		bDmaOk = pDmaController->pfDmaProgramChannel(pDmaChannel,
+			wPacketSize, pDmaChannel->bDesiredMode, (uint8_t*)(pUrb->transfer_dma) /*pBuffer*/,
 			pEnd->dwRequestSize,(void*)pThis);
 		if(bDmaOk) {
 			/* success; avoid loading FIFO using CPU */
@@ -556,11 +556,11 @@ if(bWantDMA)
 	if (bEnd) {
 	    MGC_WriteCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd, wCsr | MGC_M_TXCSR_MODE);
 	}
-	} else 
+	} else
 	{ /* receive */
                 /* if programmed for Tx, be sure it is ready for re-use */
 				  MGC_WriteCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd, wCsr & (~MGC_M_TXCSR_MODE));
-#if	0								
+#if	0
                 if (wCsr & MGC_M_TXCSR_MODE) { /*this env is in priphrial mode ,not take place in orion now*/
                         pEnd->bIsReady = FALSE;
                         if (wCsr & MGC_M_TXCSR_FIFONOTEMPTY) {
@@ -583,7 +583,7 @@ if(bWantDMA)
                       DEBUG_CODE(1, printk( "LAND>%s: end %d Rx residual\n", \
                                              __FUNCTION__, bEnd); )
                         bDone = mgc_packet_rx(pThis, bEnd, FALSE);
-			
+
 			   if(bReFlags)
 			   	{
 				          if (bDone) {
@@ -599,7 +599,7 @@ if(bWantDMA)
 					                        /* save data toggle */
 					                        usb_settoggle(pUrb->dev, pEnd->bEnd, 0,
 					                                      (wCsr& MGC_M_RXCSR_H_DATATOGGLE) ? 1 : 0);
-										
+
 					                }
 					                if (pUrb) {
 					                        /* set status */
@@ -622,7 +622,7 @@ if(bWantDMA)
 				bReFlags=FALSE;
 				return;
 			       }
-			   	}			
+			   	}
                 }
 
                 /* address */
@@ -674,11 +674,11 @@ if(bWantDMA)
                 /* program data toggle if possibly switching use */
                 if (!pEnd->bIsReady && pThis->bIsMultipoint) {
                 	wCsr = MGC_ReadCsr16(pBase, MGC_O_HDRC_RXCSR, bEnd);
-                        wCsr |= MGC_M_RXCSR_H_WR_DATATOGGLE;  
+                        wCsr |= MGC_M_RXCSR_H_WR_DATATOGGLE;
                         if (usb_gettoggle(pUrb->dev, pEnd->bEnd, 0)) {
                                 wCsr |= MGC_M_RXCSR_H_DATATOGGLE;
                         }
-                        MGC_WriteCsr16(pBase, MGC_O_HDRC_RXCSR, bEnd, wCsr); 
+                        MGC_WriteCsr16(pBase, MGC_O_HDRC_RXCSR, bEnd, wCsr);
                 }
 
                 /* kick things off */
@@ -699,10 +699,10 @@ if(bWantDMA)
 			spin_unlock_irqrestore(&pThis->Lock, flags);
 			return;
 		}
-		
+
 		if(pDmaController && !pDmaChannel) {
 			pDmaChannel = pEnd->pDmaChannel = pDmaController->pfDmaAllocateChannel(
-				pDmaController->pPrivateData, bEnd, nOut ? TRUE : FALSE, 
+				pDmaController->pPrivateData, bEnd, nOut ? TRUE : FALSE,
 				bStdType, wPacketSize);
 		}
 		if(pDmaChannel) {
@@ -720,25 +720,25 @@ if(bWantDMA)
 			}
 			pDmaChannel->dwActualLength = 0L;
 			pEnd->dwRequestSize = min(dwLength, pDmaChannel->dwMaxLength);
-			bDmaOk = pDmaController->pfDmaProgramChannel(pDmaChannel, 
-				wPacketSize, pDmaChannel->bDesiredMode, (uint8_t*)(pUrb->transfer_dma) /*pBuffer*/, 
+			bDmaOk = pDmaController->pfDmaProgramChannel(pDmaChannel,
+				wPacketSize, pDmaChannel->bDesiredMode, (uint8_t*)(pUrb->transfer_dma) /*pBuffer*/,
 				pEnd->dwRequestSize,(void*)pThis);
 			if(!bDmaOk) {
 				/* programming failed; give up */
 				pDmaController->pfDmaReleaseChannel(pDmaChannel);
 				pEnd->pDmaChannel = NULL;
 			}
-		
+
 		}
                 MGC_WriteCsr16(pBase, MGC_O_HDRC_RXCSR, bEnd, wCsr);
 	} else {
                 wIntrRxE = MGC_Read16(pBase, MGC_O_HDRC_INTRRXE);
                 //MGC_Write16(pBase, MGC_O_HDRC_INTRTXE, wIntrRxE & ~(1 << bEnd));
                 MGC_Write16(pBase, MGC_O_HDRC_INTRRXE, wIntrRxE | (1 << bEnd));
-          
+
 		MGC_WriteCsr16(pBase, MGC_O_HDRC_RXCSR, bEnd, wCsr);
 #if	0
-		usec_cnt = 0; 
+		usec_cnt = 0;
 		do {
 			udelay(1);
 			usec_cnt++;
@@ -828,7 +828,7 @@ static void mgc_hdrc_start_tx(MGC_LinuxCd* pThis, uint8_t bEnd)
         MGC_SelectEnd(pBase, bEnd);
 
          if (bEnd) {
-		/* To reduce the Bulk CBW/CSW interrupts, 
+		/* To reduce the Bulk CBW/CSW interrupts,
                    we are try to finish small packet in polling */
                 //wIntrTxE = MGC_Read16(pBase, MGC_O_HDRC_INTRTXE);
                 //MGC_Write16(pBase, MGC_O_HDRC_INTRTXE, wIntrTxE & ~(1 << bEnd));
@@ -838,7 +838,7 @@ static void mgc_hdrc_start_tx(MGC_LinuxCd* pThis, uint8_t bEnd)
                 wCsr |=  MGC_M_TXCSR_TXPKTRDY | MGC_M_TXCSR_MODE;
                 MGC_WriteCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd, wCsr);
 #if	0
-		usec_cnt = 0; 
+		usec_cnt = 0;
 		do {
 			udelay(1);
 			usec_cnt++;
@@ -891,7 +891,7 @@ static int mgc_find_end(MGC_LinuxCd* pThis, struct urb* pUrb)
         if (usb_pipecontrol(pUrb->pipe)) {
                 DEBUG_CODE(3, printk(KERN_INFO "%s: is a control pipe use ep0\n", \
                                      __FUNCTION__); )
-          
+
                 return 0;
         }
 
@@ -899,7 +899,7 @@ static int mgc_find_end(MGC_LinuxCd* pThis, struct urb* pUrb)
         if (bIsBulk) {
                 if (nOut && pThis->bBulkTxEnd) {
                         DEBUG_CODE(3, printk(KERN_INFO "%s: use the bulk tx end\n", \
-                                             __FUNCTION__); )   
+                                             __FUNCTION__); )
                         return pThis->bBulkTxEnd;
                 } else if (!nOut && pThis->bBulkRxEnd) {
                         DEBUG_CODE(3, printk(KERN_INFO "%s: use the bulk rx end\n", \
@@ -956,7 +956,7 @@ static int mgc_find_end(MGC_LinuxCd* pThis, struct urb* pUrb)
                              __FUNCTION__, nOut, wPacketSize, usb_pipetype(nPipe), \
                              bAddress, bEnd, (unsigned long)pUrb, \
                              (nBestExactEnd >= 0) ? nBestExactEnd : nBestEnd); )
-                 
+
 
         return (nBestExactEnd >= 0) ? nBestExactEnd : nBestEnd;
 }
@@ -1035,7 +1035,7 @@ static uint8_t mgc_packet_rx(MGC_LinuxCd* pThis, uint8_t bEnd,
                 bDone = (pEnd->dwOffset >= pUrb->transfer_buffer_length) ||
                         (wRxCount < pEnd->wPacketSize);
         }
-	
+
 	mgc_hdrc_unload_fifo(pBase, bEnd, wLength, pBuffer);
 
         if (wRxCount <= wLength) {
@@ -1074,7 +1074,7 @@ static uint8_t mgc_packet_rx(MGC_LinuxCd* pThis, uint8_t bEnd,
                 if (pUrb) {
 						   if((&pUrb->urb_list)->prev == (void *)0x00200200)
 							 	(&pUrb->urb_list)->prev = &pEnd->urb_list;
-							 
+
                         list_del(&pUrb->urb_list);
                         if (pUrb) nPipe = pUrb->pipe;
                         /*if (pUrb && USB_ENDPOINT_HALTED(pUrb->dev, usb_pipeendpoint(nPipe),
@@ -1310,7 +1310,7 @@ static int mgc_submit_urb(struct urb* pUrb, int iMemFlags)
 
         /* find appropriate local endpoint to do it */
         nEnd = mgc_find_end(pThis, pUrb);
-        if (nEnd < 0) nEnd=1;           
+        if (nEnd < 0) nEnd=1;
 
         DEBUG_CODE(1, \
                    printk(KERN_INFO "%s: end %d claimed for proto=%d, addr=%d, end=%d\n", \
@@ -1335,7 +1335,7 @@ static int mgc_submit_urb(struct urb* pUrb, int iMemFlags)
         DEBUG_CODE(2, printk(KERN_INFO "%s: pUrb=%lx, end=%d, bufsize=%x\n", \
                              __FUNCTION__, (unsigned long)pUrb, nEnd, \
                              pUrb->transfer_buffer_length); )
-                 
+
 
         DEBUG_CODE(2, if (!nEnd) {
         \
@@ -1347,7 +1347,7 @@ static int mgc_submit_urb(struct urb* pUrb, int iMemFlags)
                 \
         } )
 
-	                	
+
         /* queue URBs */
         pEnd = &(pThis->aLocalEnd[nEnd]);
         spin_lock(&pEnd->Lock);
@@ -1470,7 +1470,7 @@ static int mgc_unlink_urb(struct urb* pUrb, int status)
 
                 /* Structure gets somehow corrupted... */
                 pUrb->hcpriv=NULL;
-				printk("mgc_unlink_urb 1\n");
+				printk("SICTI... mgc_unlink_urb 1\n");
                 pUrb->complete(pUrb, NULL);
 
                 DEBUG_CODE(1, \
@@ -1571,7 +1571,7 @@ static uint8_t mgc_hdrc_service_host_default(MGC_LinuxCd* pThis,
                         }else{
 									return bMore;
                         	}
-												
+
                         pFifoDest = (uint8_t*)(pUrb->transfer_buffer + pUrb->actual_length);
                         wFifoCount = (uint16_t)min(pEnd->wPacketSize,
                                                    (uint16_t)(pUrb->transfer_buffer_length - pUrb->actual_length));
@@ -1769,7 +1769,7 @@ static void mgc_hdrc_service_tx_avail(MGC_LinuxCd* pThis, uint8_t bEnd)
         uint32_t status = USB_ST_NOERROR;
         uint8_t* pBase = (uint8_t*)pThis->pRegs;
         unsigned long flags;
-	
+
        DEBUG_CODE(2, printk(KERN_INFO "=> %s\n", __FUNCTION__); )
         spin_lock(&pEnd->Lock);
         pUrb = pEnd->pUrb;
@@ -1803,7 +1803,7 @@ static void mgc_hdrc_service_tx_avail(MGC_LinuxCd* pThis, uint8_t bEnd)
         if (wVal & MGC_M_TXCSR_H_RXSTALL) {
                 printk(KERN_INFO "Tx stall instance=%p\n", pThis);
 		printk(KERN_INFO "%s: end %d TxCSR=%04x\n", __FUNCTION__, bEnd, wVal);
-                
+
 		/* stall; record URB status */
                 status = USB_ST_STALL;
                 /* also record with USB core */
@@ -1872,7 +1872,7 @@ static void mgc_hdrc_service_tx_avail(MGC_LinuxCd* pThis, uint8_t bEnd)
                                 }
                         } else if (pEnd->dwOffset > pUrb->transfer_buffer_length) {
                                 		/* send a null packet over */
-                                		bDone = TRUE;                      
+                                		bDone = TRUE;
                         				} else {
                                 				/* for now, assume any DMA controller can move a maximum-size request */
                                 				/* load next packet */
@@ -1914,7 +1914,7 @@ static void mgc_hdrc_service_tx_avail(MGC_LinuxCd* pThis, uint8_t bEnd)
 
                 spin_unlock(&pEnd->Lock);
                 spin_unlock_irqrestore(&pThis->Lock, flags);
-								
+
 				  MGC_WriteCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd, MGC_ReadCsr16(pBase, MGC_O_HDRC_TXCSR, bEnd)&(~MGC_M_TXCSR_MODE));
                 if (pUrb->complete) {
                         pUrb->hcpriv=NULL;
@@ -2054,7 +2054,7 @@ static void mgc_hdrc_service_rx_ready(MGC_LinuxCd* pThis, uint8_t bEnd)
 
 					    pEnd->dwOffset += pEnd->pDmaChannel->dwActualLength;
 					    pUrb->actual_length += pEnd->pDmaChannel->dwActualLength;
-              
+
 					}
 
 					bDone=TRUE;
@@ -2063,7 +2063,7 @@ static void mgc_hdrc_service_rx_ready(MGC_LinuxCd* pThis, uint8_t bEnd)
 			 	{
                         		bDone = mgc_packet_rx(pThis, bEnd, bIsochError);
 			 	}
-						
+
                 } else {
                         /* stop endpoint since we have no place for its data */
                         DEBUG_CODE(1, printk(KERN_ERR "%s: no URB on end %d Rx!\n", \
@@ -2099,7 +2099,7 @@ static void mgc_hdrc_service_rx_ready(MGC_LinuxCd* pThis, uint8_t bEnd)
                         usb_settoggle(pUrb->dev, pEnd->bEnd, 0,
                                       (wVal & MGC_M_RXCSR_H_DATATOGGLE) ? 1 : 0);
 
-						
+
                 }
 
                 spin_unlock_irqrestore(&pThis->Lock, flags);
@@ -2114,7 +2114,7 @@ static void mgc_hdrc_service_rx_ready(MGC_LinuxCd* pThis, uint8_t bEnd)
 
                         if (pUrb->complete) {
                                 pUrb->hcpriv=NULL;
-			////	printk("LAND>CallBack called\n");	
+			////	printk("LAND>CallBack called\n");
 				pUrb->complete(pUrb, NULL);
                         }
                 }
@@ -2139,9 +2139,9 @@ static void mgc_hdrc_service_rx_ready(MGC_LinuxCd* pThis, uint8_t bEnd)
  static void mgc_hdrc_dump_regs(MGC_LinuxCd* pThis, uint8_t bEnd)
  {
          uint8_t* pBase = (uint8_t*)pThis->pRegs;
- 
+
          MGC_SelectEnd(pBase, bEnd);
- 
+
          if (!bEnd) {
                  printk(KERN_INFO " 0: CSR0=%04x, Count0=%02x, Type0=%02x, NAKlimit0=%02x\n",
                         MGC_ReadCsr16(pBase, MGC_O_HDRC_CSR0, 0),
@@ -2162,7 +2162,7 @@ static void mgc_hdrc_service_rx_ready(MGC_LinuxCd* pThis, uint8_t bEnd)
                         MGC_ReadCsr8(pBase, MGC_O_HDRC_RXINTERVAL, bEnd),
                         MGC_ReadCsr16(pBase, MGC_O_HDRC_RXCOUNT, bEnd));
          }
- 
+
          if ( pThis->bIsHost && pThis->bIsMultipoint) {
                  printk(KERN_INFO "    TxAddr=%02x, TxHubAddr=%02x, TxHubPort=%02x\n",
                         MGC_Read8(pBase, MGC_BUSCTL_OFFSET(bEnd, MGC_O_HDRC_TXFUNCADDR)),

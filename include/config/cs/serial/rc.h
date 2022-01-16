@@ -1,1 +1,0 @@
-#undef CONFIG_CS_SERIAL_RC

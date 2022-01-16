@@ -1,1 +1,0 @@
-#define CONFIG_CPB0_SIZE 0x900000

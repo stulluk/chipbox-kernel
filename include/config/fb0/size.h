@@ -1,1 +1,0 @@
-#define CONFIG_FB0_SIZE 0xc00000

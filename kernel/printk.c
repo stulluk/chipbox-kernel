@@ -484,7 +484,6 @@ static void emit_log_char(char c)
 		con_start = log_end - log_buf_len;
 	if (logged_chars < log_buf_len)
 		logged_chars++;
-
 }
 
 /*
@@ -907,7 +906,6 @@ void register_console(struct console * console)
 			continue;
 		if (console->index < 0)
 			console->index = console_cmdline[i].index;
-
 		if (console->setup &&
 		    console->setup(console, console_cmdline[i].options) != 0)
 			break;

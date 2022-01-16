@@ -1,1 +1,0 @@
-#define CONFIG_VIDEO_SUPPORT 1

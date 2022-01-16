@@ -916,4 +916,3 @@ struct sys_timer versatile_timer = {
 	.init		= versatile_timer_init,
 	.offset		= versatile_gettimeoffset,
 };
-

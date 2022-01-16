@@ -1,1 +1,0 @@
-#undef CONFIG_IOSCHED_CFQ

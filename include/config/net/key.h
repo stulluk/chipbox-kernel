@@ -1,1 +1,0 @@
-#define CONFIG_NET_KEY 1

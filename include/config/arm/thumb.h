@@ -1,1 +1,0 @@
-#define CONFIG_ARM_THUMB 1

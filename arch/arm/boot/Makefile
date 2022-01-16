@@ -64,7 +64,6 @@ quiet_cmd_uimage = UIMAGE  $@
 $(obj)/uImage:	$(obj)/zImage FORCE
 	$(call if_changed,uimage)
 	@echo '  Image $@ is ready'
-	@if [ -n "$(TFTPT)" ]; then cp -v $@ $(TFTPT)/$(shell basename $@).$(shell basename $(O)); fi
 
 $(obj)/bootp/bootp: $(obj)/zImage initrd FORCE
 	$(Q)$(MAKE) $(build)=$(obj)/bootp $@

@@ -317,11 +317,11 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
         
     }
     
-// 	snprintf(gd->disk_name, sizeof(gd->disk_name),
-// 		 "%s%c", tr->name, (tr->part_bits?'a':'0') + new->devnum);
+	//snprintf(gd->disk_name, sizeof(gd->disk_name),
+	//	"%s%c", tr->name, (tr->part_bits?'a':'0') + new->devnum);
 
-// 	snprintf(gd->devfs_name, sizeof(gd->devfs_name),
-// 		 "%s/%c", tr->name, (tr->part_bits?'a':'0') + new->devnum);
+	//snprintf(gd->devfs_name, sizeof(gd->devfs_name),
+	//	"%s/%c", tr->name, (tr->part_bits?'a':'0') + new->devnum);
 
 	/* 2.5 has capacity in units of 512 bytes while still
 	   having BLOCK_SIZE_BITS set to 10. Just to keep us amused. */
@@ -407,7 +407,7 @@ int register_mtd_blktrans(struct mtd_blktrans_ops *tr)
 	memset(tr->blkcore_priv, 0, sizeof(*tr->blkcore_priv));
 
 	down(&mtd_table_mutex);
-    //printk("register %s block device on major %d\n",tr->name, tr->major);
+	//printk("register %s block device on major %d\n",tr->name, tr->major);
 	ret = register_blkdev(tr->major, tr->name);
 	if (ret) {
 		printk(KERN_WARNING "Unable to register %s block device on major %d: %d\n",

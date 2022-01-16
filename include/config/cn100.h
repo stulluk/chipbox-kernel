@@ -1,1 +1,0 @@
-#define CONFIG_CN100 1

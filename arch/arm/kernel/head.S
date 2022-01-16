@@ -166,6 +166,7 @@ __mmap_switched:
 	b	start_kernel
 
 
+
 /*
  * Setup common bits before finally enabling the MMU.  Essentially
  * this is just loading the page table pointer and domain access

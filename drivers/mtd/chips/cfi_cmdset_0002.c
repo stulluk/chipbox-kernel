@@ -92,7 +92,7 @@ static void cfi_tell_features(struct cfi_pri_amdstd *extp)
 
 	printk("  Silicon revision: %d\n", extp->SiliconRevision >> 1);
 	printk("  Address sensitive unlock: %s\n", 
-			(extp->SiliconRevision & 1) ? "Not required" : "Required");
+	       (extp->SiliconRevision & 1) ? "Not required" : "Required");
 
 	if (extp->EraseSuspend < ARRAY_SIZE(erase_suspend))
 		printk("  Erase Suspend: %s\n", erase_suspend[extp->EraseSuspend]);
@@ -106,20 +106,20 @@ static void cfi_tell_features(struct cfi_pri_amdstd *extp)
 
 
 	printk("  Temporary block unprotect: %s\n",
-			extp->TmpBlkUnprotect ? "Supported" : "Not supported");
+	       extp->TmpBlkUnprotect ? "Supported" : "Not supported");
 	printk("  Block protect/unprotect scheme: %d\n", extp->BlkProtUnprot);
 	printk("  Number of simultaneous operations: %d\n", extp->SimultaneousOps);
 	printk("  Burst mode: %s\n",
-			extp->BurstMode ? "Supported" : "Not supported");
+	       extp->BurstMode ? "Supported" : "Not supported");
 	if (extp->PageMode == 0)
 		printk("  Page mode: Not supported\n");
 	else
 		printk("  Page mode: %d word page\n", extp->PageMode << 2);
 
 	printk("  Vpp Supply Minimum Program/Erase Voltage: %d.%d V\n", 
-			extp->VppMin >> 4, extp->VppMin & 0xf);
+	       extp->VppMin >> 4, extp->VppMin & 0xf);
 	printk("  Vpp Supply Maximum Program/Erase Voltage: %d.%d V\n", 
-			extp->VppMax >> 4, extp->VppMax & 0xf);
+	       extp->VppMax >> 4, extp->VppMax & 0xf);
 
 	if (extp->TopBottom < ARRAY_SIZE(top_bottom))
 		printk("  Top/Bottom Boot Block: %s\n", top_bottom[extp->TopBottom]);
@@ -172,10 +172,10 @@ static void fixup_use_erase_chip(struct mtd_info *mtd, void *param)
 	struct map_info *map = mtd->priv;
 	struct cfi_private *cfi = map->fldrv_priv;
 	if ((cfi->cfiq->NumEraseRegions == 1) &&
-			((cfi->cfiq->EraseRegionInfo[0] & 0xffff) == 0)) {
+		((cfi->cfiq->EraseRegionInfo[0] & 0xffff) == 0)) {
 		mtd->erase = cfi_amdstd_erase_chip;
 	}
-
+	
 }
 
 static struct cfi_fixup cfi_fixup_table[] = {
@@ -264,17 +264,17 @@ struct mtd_info *cfi_cmdset_0002(struct map_info *map, int primary)
 		bootloc = extp->TopBottom;
 		if ((bootloc != 2) && (bootloc != 3)) {
 			printk(KERN_WARNING "%s: CFI does not contain boot "
-					"bank location. Assuming top.\n", map->name);
+			       "bank location. Assuming top.\n", map->name);
 			bootloc = 2;
 		}
 
 		if (bootloc == 3 && cfi->cfiq->NumEraseRegions > 1) {
 			printk(KERN_WARNING "%s: Swapping erase regions for broken CFI table.\n", map->name);
-
+			
 			for (i=0; i<cfi->cfiq->NumEraseRegions / 2; i++) {
 				int j = (cfi->cfiq->NumEraseRegions-1)-i;
 				__u32 swap;
-
+				
 				swap = cfi->cfiq->EraseRegionInfo[i];
 				cfi->cfiq->EraseRegionInfo[i] = cfi->cfiq->EraseRegionInfo[j];
 				cfi->cfiq->EraseRegionInfo[j] = swap;
@@ -285,11 +285,11 @@ struct mtd_info *cfi_cmdset_0002(struct map_info *map, int primary)
 		cfi->addr_unlock2 = 0x2aa;
 		/* Modify the unlock address if we are in compatibility mode */
 		if (	/* x16 in x8 mode */
-				((cfi->device_type == CFI_DEVICETYPE_X8) && 
-				 (cfi->cfiq->InterfaceDesc == 2)) ||
-				/* x32 in x16 mode */
-				((cfi->device_type == CFI_DEVICETYPE_X16) &&
-				 (cfi->cfiq->InterfaceDesc == 4))) 
+			((cfi->device_type == CFI_DEVICETYPE_X8) && 
+				(cfi->cfiq->InterfaceDesc == 2)) ||
+			/* x32 in x16 mode */
+			((cfi->device_type == CFI_DEVICETYPE_X16) &&
+				(cfi->cfiq->InterfaceDesc == 4))) 
 		{
 			cfi->addr_unlock1 = 0xaaa;
 			cfi->addr_unlock2 = 0x555;
@@ -308,9 +308,9 @@ struct mtd_info *cfi_cmdset_0002(struct map_info *map, int primary)
 		cfi->chips[i].buffer_write_time = 1<<cfi->cfiq->BufWriteTimeoutTyp;
 		cfi->chips[i].erase_time = 1<<cfi->cfiq->BlockEraseTimeoutTyp;
 	}		
-
+	
 	map->fldrv = &cfi_amdstd_chipdrv;
-
+	
 	return cfi_amdstd_setup(mtd);
 }
 
@@ -324,23 +324,23 @@ static struct mtd_info *cfi_amdstd_setup(struct mtd_info *mtd)
 	int i,j;
 
 	printk(KERN_NOTICE "number of %s chips: %d\n", 
-			(cfi->cfi_mode == CFI_MODE_CFI)?"CFI":"JEDEC",cfi->numchips);
+	       (cfi->cfi_mode == CFI_MODE_CFI)?"CFI":"JEDEC",cfi->numchips);
 	/* Select the correct geometry setup */ 
 	mtd->size = devsize * cfi->numchips;
 
 	mtd->numeraseregions = cfi->cfiq->NumEraseRegions * cfi->numchips;
 	mtd->eraseregions = kmalloc(sizeof(struct mtd_erase_region_info)
-			* mtd->numeraseregions, GFP_KERNEL);
+				    * mtd->numeraseregions, GFP_KERNEL);
 	if (!mtd->eraseregions) { 
 		printk(KERN_WARNING "Failed to allocate memory for MTD erase region info\n");
 		goto setup_err;
 	}
-
+			
 	for (i=0; i<cfi->cfiq->NumEraseRegions; i++) {
 		unsigned long ernum, ersize;
 		ersize = ((cfi->cfiq->EraseRegionInfo[i] >> 8) & ~0xff) * cfi->interleave;
 		ernum = (cfi->cfiq->EraseRegionInfo[i] & 0xffff) + 1;
-
+			
 		if (mtd->erasesize < ersize) {
 			mtd->erasesize = ersize;
 		}
@@ -360,20 +360,20 @@ static struct mtd_info *cfi_amdstd_setup(struct mtd_info *mtd)
 	// debug
 	for (i=0; i<mtd->numeraseregions;i++){
 		printk("%d: offset=0x%x,size=0x%x,blocks=%d\n",
-				i,mtd->eraseregions[i].offset,
-				mtd->eraseregions[i].erasesize,
-				mtd->eraseregions[i].numblocks);
+		       i,mtd->eraseregions[i].offset,
+		       mtd->eraseregions[i].erasesize,
+		       mtd->eraseregions[i].numblocks);
 	}
 #endif
 
 	/* FIXME: erase-suspend-program is broken.  See
-http://lists.infradead.org/pipermail/linux-mtd/2003-December/009001.html */
+	   http://lists.infradead.org/pipermail/linux-mtd/2003-December/009001.html */
 	printk(KERN_NOTICE "cfi_cmdset_0002: Disabling erase-suspend-program due to code brokenness.\n");
 
 	__module_get(THIS_MODULE);
 	return mtd;
 
-setup_err:
+ setup_err:
 	if(mtd) {
 		if(mtd->eraseregions)
 			kfree(mtd->eraseregions);
@@ -412,94 +412,94 @@ static int get_chip(struct map_info *map, struct flchip *chip, unsigned long adr
 	unsigned long timeo;
 	struct cfi_pri_amdstd *cfip = (struct cfi_pri_amdstd *)cfi->cmdset_priv;
 
-resettime:
+ resettime:
 	timeo = jiffies + HZ;
-retry:
+ retry:
 	switch (chip->state) {
 
-		case FL_STATUS:
-			for (;;) {
-				if (chip_ready(map, adr))
-					break;
+	case FL_STATUS:
+		for (;;) {
+			if (chip_ready(map, adr))
+				break;
 
-				if (time_after(jiffies, timeo)) {
-					printk(KERN_ERR "Waiting for chip to be ready timed out.\n");
-					cfi_spin_unlock(chip->mutex);
-					return -EIO;
-				}
+			if (time_after(jiffies, timeo)) {
+				printk(KERN_ERR "Waiting for chip to be ready timed out.\n");
 				cfi_spin_unlock(chip->mutex);
-				cfi_udelay(1);
-				cfi_spin_lock(chip->mutex);
-				/* Someone else might have been playing with it. */
-				goto retry;
+				return -EIO;
 			}
-
-		case FL_READY:
-		case FL_CFI_QUERY:
-		case FL_JEDEC_QUERY:
-			return 0;
-
-		case FL_ERASING:
-			if (mode == FL_WRITING) /* FIXME: Erase-suspend-program appears broken. */
-				goto sleep;
-
-			if (!(mode == FL_READY || mode == FL_POINT
-						|| !cfip
-						|| (mode == FL_WRITING && (cfip->EraseSuspend & 0x2))
-						|| (mode == FL_WRITING && (cfip->EraseSuspend & 0x1))))
-				goto sleep;
-
-			/* We could check to see if we're trying to access the sector
-			 * that is currently being erased. However, no user will try
-			 * anything like that so we just wait for the timeout. */
-
-			/* Erase suspend */
-			/* It's harmless to issue the Erase-Suspend and Erase-Resume
-			 * commands when the erase algorithm isn't in progress. */
-			map_write(map, CMD(0xB0), chip->in_progress_block_addr);
-			chip->oldstate = FL_ERASING;
-			chip->state = FL_ERASE_SUSPENDING;
-			chip->erase_suspended = 1;
-			for (;;) {
-				if (chip_ready(map, adr))
-					break;
-
-				if (time_after(jiffies, timeo)) {
-					/* Should have suspended the erase by now.
-					 * Send an Erase-Resume command as either
-					 * there was an error (so leave the erase
-					 * routine to recover from it) or we trying to
-					 * use the erase-in-progress sector. */
-					map_write(map, CMD(0x30), chip->in_progress_block_addr);
-					chip->state = FL_ERASING;
-					chip->oldstate = FL_READY;
-					printk(KERN_ERR "MTD %s(): chip not ready after erase suspend\n", __func__);
-					return -EIO;
-				}
-
-				cfi_spin_unlock(chip->mutex);
-				cfi_udelay(1);
-				cfi_spin_lock(chip->mutex);
-				/* Nobody will touch it while it's in state FL_ERASE_SUSPENDING.
-				   So we can just loop here. */
-			}
-			chip->state = FL_READY;
-			return 0;
-
-		case FL_POINT:
-			/* Only if there's no operation suspended... */
-			if (mode == FL_READY && chip->oldstate == FL_READY)
-				return 0;
-
-		default:
-sleep:
-			set_current_state(TASK_UNINTERRUPTIBLE);
-			add_wait_queue(&chip->wq, &wait);
 			cfi_spin_unlock(chip->mutex);
-			schedule();
-			remove_wait_queue(&chip->wq, &wait);
+			cfi_udelay(1);
 			cfi_spin_lock(chip->mutex);
-			goto resettime;
+			/* Someone else might have been playing with it. */
+			goto retry;
+		}
+				
+	case FL_READY:
+	case FL_CFI_QUERY:
+	case FL_JEDEC_QUERY:
+		return 0;
+
+	case FL_ERASING:
+		if (mode == FL_WRITING) /* FIXME: Erase-suspend-program appears broken. */
+			goto sleep;
+
+		if (!(mode == FL_READY || mode == FL_POINT
+		      || !cfip
+		      || (mode == FL_WRITING && (cfip->EraseSuspend & 0x2))
+		      || (mode == FL_WRITING && (cfip->EraseSuspend & 0x1))))
+			goto sleep;
+
+		/* We could check to see if we're trying to access the sector
+		 * that is currently being erased. However, no user will try
+		 * anything like that so we just wait for the timeout. */
+
+		/* Erase suspend */
+		/* It's harmless to issue the Erase-Suspend and Erase-Resume
+		 * commands when the erase algorithm isn't in progress. */
+		map_write(map, CMD(0xB0), chip->in_progress_block_addr);
+		chip->oldstate = FL_ERASING;
+		chip->state = FL_ERASE_SUSPENDING;
+		chip->erase_suspended = 1;
+		for (;;) {
+			if (chip_ready(map, adr))
+				break;
+
+			if (time_after(jiffies, timeo)) {
+				/* Should have suspended the erase by now.
+				 * Send an Erase-Resume command as either
+				 * there was an error (so leave the erase
+				 * routine to recover from it) or we trying to
+				 * use the erase-in-progress sector. */
+				map_write(map, CMD(0x30), chip->in_progress_block_addr);
+				chip->state = FL_ERASING;
+				chip->oldstate = FL_READY;
+				printk(KERN_ERR "MTD %s(): chip not ready after erase suspend\n", __func__);
+				return -EIO;
+			}
+			
+			cfi_spin_unlock(chip->mutex);
+			cfi_udelay(1);
+			cfi_spin_lock(chip->mutex);
+			/* Nobody will touch it while it's in state FL_ERASE_SUSPENDING.
+			   So we can just loop here. */
+		}
+		chip->state = FL_READY;
+		return 0;
+
+	case FL_POINT:
+		/* Only if there's no operation suspended... */
+		if (mode == FL_READY && chip->oldstate == FL_READY)
+			return 0;
+
+	default:
+	sleep:
+		set_current_state(TASK_UNINTERRUPTIBLE);
+		add_wait_queue(&chip->wq, &wait);
+		cfi_spin_unlock(chip->mutex);
+		schedule();
+		remove_wait_queue(&chip->wq, &wait);
+		cfi_spin_lock(chip->mutex);
+		goto resettime;
 	}
 }
 
@@ -509,20 +509,20 @@ static void put_chip(struct map_info *map, struct flchip *chip, unsigned long ad
 	struct cfi_private *cfi = map->fldrv_priv;
 
 	switch(chip->oldstate) {
-		case FL_ERASING:
-			chip->state = chip->oldstate;
-			map_write(map, CMD(0x30), chip->in_progress_block_addr);
-			chip->oldstate = FL_READY;
-			chip->state = FL_ERASING;
-			break;
+	case FL_ERASING:
+		chip->state = chip->oldstate;
+		map_write(map, CMD(0x30), chip->in_progress_block_addr);
+		chip->oldstate = FL_READY;
+		chip->state = FL_ERASING;
+		break;
 
-		case FL_READY:
-		case FL_STATUS:
-			/* We should really make set_vpp() count, rather than doing this */
-			DISABLE_VPP(map);
-			break;
-		default:
-			printk(KERN_ERR "MTD: put_chip() called with oldstate %d!!\n", chip->oldstate);
+	case FL_READY:
+	case FL_STATUS:
+		/* We should really make set_vpp() count, rather than doing this */
+		DISABLE_VPP(map);
+		break;
+	default:
+		printk(KERN_ERR "MTD: put_chip() called with oldstate %d!!\n", chip->oldstate);
 	}
 	wake_up(&chip->wq);
 }
@@ -615,7 +615,7 @@ static inline int do_read_secsi_onechip(struct map_info *map, struct flchip *chi
 
 	down(&ebi_mutex_lock);
 
-retry:
+ retry:
 	cfi_spin_lock(chip->mutex);
 
 	if (chip->state != FL_READY){
@@ -624,7 +624,7 @@ retry:
 #endif
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		add_wait_queue(&chip->wq, &wait);
-
+		
 		cfi_spin_unlock(chip->mutex);
 
 		schedule();
@@ -645,14 +645,14 @@ retry:
 	cfi_send_gen_cmd(0xAA, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0x55, cfi->addr_unlock2, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0x88, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
-
+	
 	map_copy_from(map, buf, adr, len);
 
 	cfi_send_gen_cmd(0xAA, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0x55, cfi->addr_unlock2, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0x90, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0x00, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
-
+	
 	wake_up(&chip->wq);
 	cfi_spin_unlock(chip->mutex);
 
@@ -735,7 +735,7 @@ static int do_write_oneword(struct map_info *map, struct flchip *chip, unsigned 
 	}
 
 	DEBUG( MTD_DEBUG_LEVEL3, "MTD %s(): WRITE 0x%.8lx(0x%.8lx)\n",
-			__func__, adr, datum.x[0] );
+	       __func__, adr, datum.x[0] );
 
 	/*
 	 * Check for a NOP for the case when the datum to write is already
@@ -746,12 +746,12 @@ static int do_write_oneword(struct map_info *map, struct flchip *chip, unsigned 
 	oldd = map_read(map, adr);
 	if (map_word_equal(map, oldd, datum)) {
 		DEBUG( MTD_DEBUG_LEVEL3, "MTD %s(): NOP\n",
-				__func__);
+		       __func__);
 		goto op_done;
 	}
 
 	ENABLE_VPP(map);
-retry:
+ retry:
 	cfi_send_gen_cmd(0xAA, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0x55, cfi->addr_unlock2, chip->start, map, cfi, cfi->device_type, NULL);
 	cfi_send_gen_cmd(0xA0, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
@@ -783,7 +783,7 @@ retry:
 			goto op_done;
 
 		if (time_after(jiffies, timeo))
-			break;
+                        break;
 
 		/* Latency issues. Drop the lock, wait a while and retry */
 		cfi_spin_unlock(chip->mutex);
@@ -800,7 +800,7 @@ retry:
 		goto retry;
 
 	ret = -EIO;
-op_done:
+ op_done:
 	chip->state = FL_READY;
 	put_chip(map, chip, adr);
 	cfi_spin_unlock(chip->mutex);
@@ -812,7 +812,7 @@ op_done:
 
 
 static int cfi_amdstd_write_words(struct mtd_info *mtd, loff_t to, size_t len,
-		size_t *retlen, const u_char *buf)
+				  size_t *retlen, const u_char *buf)
 {
 	struct map_info *map = mtd->priv;
 	struct cfi_private *cfi = map->fldrv_priv;
@@ -836,7 +836,7 @@ static int cfi_amdstd_write_words(struct mtd_info *mtd, loff_t to, size_t len,
 		int n = 0;
 		map_word tmp_buf;
 
-retry:
+ retry:
 		cfi_spin_lock(cfi->chips[chipnum].mutex);
 
 		if (cfi->chips[chipnum].state != FL_READY) {
@@ -864,14 +864,14 @@ retry:
 
 		/* Number of bytes to copy from buffer */
 		n = min_t(int, len, map_bankwidth(map)-i);
-
+		
 		tmp_buf = map_word_load_partial(map, tmp_buf, buf, i, n);
 
 		ret = do_write_oneword(map, &cfi->chips[chipnum], 
-				bus_ofs, tmp_buf);
+				       bus_ofs, tmp_buf);
 		if (ret) 
 			return ret;
-
+		
 		ofs += n;
 		buf += n;
 		(*retlen) += n;
@@ -884,7 +884,7 @@ retry:
 				return 0;
 		}
 	}
-
+	
 	/* We are now aligned, write as much as possible */
 	while(len >= map_bankwidth(map)) {
 		map_word datum;
@@ -892,7 +892,7 @@ retry:
 		datum = map_word_load(map, buf);
 
 		ret = do_write_oneword(map, &cfi->chips[chipnum],
-				ofs, datum);
+				       ofs, datum);
 		if (ret)
 			return ret;
 
@@ -914,7 +914,7 @@ retry:
 	if (len & (map_bankwidth(map)-1)) {
 		map_word tmp_buf;
 
-retry1:
+ retry1:
 		cfi_spin_lock(cfi->chips[chipnum].mutex);
 
 		if (cfi->chips[chipnum].state != FL_READY) {
@@ -940,12 +940,12 @@ retry1:
 		cfi_spin_unlock(cfi->chips[chipnum].mutex);
 
 		tmp_buf = map_word_load_partial(map, tmp_buf, buf, 0, len);
-
+	
 		ret = do_write_oneword(map, &cfi->chips[chipnum], 
 				ofs, tmp_buf);
 		if (ret) 
 			return ret;
-
+		
 		(*retlen) += len;
 	}
 
@@ -957,7 +957,7 @@ retry1:
  * FIXME: interleaved mode not tested, and probably not supported!
  */
 static inline int do_write_buffer(struct map_info *map, struct flchip *chip, 
-		unsigned long adr, const u_char *buf, int len)
+				  unsigned long adr, const u_char *buf, int len)
 {
 	struct cfi_private *cfi = map->fldrv_priv;
 	unsigned long timeo = jiffies + HZ;
@@ -983,7 +983,7 @@ static inline int do_write_buffer(struct map_info *map, struct flchip *chip,
 	datum = map_word_load(map, buf);
 
 	DEBUG( MTD_DEBUG_LEVEL3, "MTD %s(): WRITE 0x%.8lx(0x%.8lx)\n",
-			__func__, adr, datum.x[0] );
+	       __func__, adr, datum.x[0] );
 
 	ENABLE_VPP(map);
 	cfi_send_gen_cmd(0xAA, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
@@ -1020,7 +1020,7 @@ static inline int do_write_buffer(struct map_info *map, struct flchip *chip,
 	cfi_spin_lock(chip->mutex);
 
 	timeo = jiffies + uWriteTimeout; 
-
+		
 	for (;;) {
 		if (chip->state != FL_WRITING) {
 			/* Someone's suspended the write. Sleep */
@@ -1038,7 +1038,7 @@ static inline int do_write_buffer(struct map_info *map, struct flchip *chip,
 
 		if (chip_ready(map, adr))
 			goto op_done;
-
+		    
 		if( time_after(jiffies, timeo))
 			break;
 
@@ -1049,14 +1049,14 @@ static inline int do_write_buffer(struct map_info *map, struct flchip *chip,
 	}
 
 	printk(KERN_WARNING "MTD %s(): software timeout\n",
-			__func__ );
+	       __func__ );
 
 	/* reset on all failures. */
 	map_write( map, CMD(0xF0), chip->start );
 	/* FIXME - should have reset delay before continuing */
 
 	ret = -EIO;
-op_done:
+ op_done:
 	chip->state = FL_READY;
 	put_chip(map, chip, adr);
 	cfi_spin_unlock(chip->mutex);
@@ -1068,7 +1068,7 @@ op_done:
 
 
 static int cfi_amdstd_write_buffers(struct mtd_info *mtd, loff_t to, size_t len,
-		size_t *retlen, const u_char *buf)
+				    size_t *retlen, const u_char *buf)
 {
 	struct map_info *map = mtd->priv;
 	struct cfi_private *cfi = map->fldrv_priv;
@@ -1090,7 +1090,7 @@ static int cfi_amdstd_write_buffers(struct mtd_info *mtd, loff_t to, size_t len,
 		if (local_len > len)
 			local_len = len;
 		ret = cfi_amdstd_write_words(mtd, ofs + (chipnum<<cfi->chipshift),
-				local_len, retlen, buf);
+					     local_len, retlen, buf);
 		if (ret)
 			return ret;
 		ofs += local_len;
@@ -1116,7 +1116,7 @@ static int cfi_amdstd_write_buffers(struct mtd_info *mtd, loff_t to, size_t len,
 			size -= size % map_bankwidth(map);
 
 		ret = do_write_buffer(map, &cfi->chips[chipnum], 
-				ofs, buf, size);
+				      ofs, buf, size);
 		if (ret)
 			return ret;
 
@@ -1137,7 +1137,7 @@ static int cfi_amdstd_write_buffers(struct mtd_info *mtd, loff_t to, size_t len,
 		size_t retlen_dregs = 0;
 
 		ret = cfi_amdstd_write_words(mtd, ofs + (chipnum<<cfi->chipshift),
-				len, &retlen_dregs, buf);
+					     len, &retlen_dregs, buf);
 
 		*retlen += retlen_dregs;
 		return ret;
@@ -1171,7 +1171,7 @@ static inline int do_erase_chip(struct map_info *map, struct flchip *chip)
 	}
 
 	DEBUG( MTD_DEBUG_LEVEL3, "MTD %s(): ERASE 0x%.8lx\n",
-			__func__, chip->start );
+	       __func__, chip->start );
 
 	ENABLE_VPP(map);
 	cfi_send_gen_cmd(0xAA, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
@@ -1223,14 +1223,14 @@ static inline int do_erase_chip(struct map_info *map, struct flchip *chip)
 	}
 
 	printk(KERN_WARNING "MTD %s(): software timeout\n",
-			__func__ );
+	       __func__ );
 
 	/* reset on all failures. */
 	map_write( map, CMD(0xF0), chip->start );
 	/* FIXME - should have reset delay before continuing */
 
 	ret = -EIO;
-op_done:
+ op_done:
 	chip->state = FL_READY;
 	put_chip(map, chip, adr);
 	cfi_spin_unlock(chip->mutex);
@@ -1260,7 +1260,7 @@ static inline int do_erase_oneblock(struct map_info *map, struct flchip *chip, u
 	}
 
 	DEBUG( MTD_DEBUG_LEVEL3, "MTD %s(): ERASE 0x%.8lx\n",
-			__func__, adr );
+	       __func__, adr );
 
 	ENABLE_VPP(map);
 	cfi_send_gen_cmd(0xAA, cfi->addr_unlock1, chip->start, map, cfi, cfi->device_type, NULL);
@@ -1273,7 +1273,7 @@ static inline int do_erase_oneblock(struct map_info *map, struct flchip *chip, u
 	chip->state = FL_ERASING;
 	chip->erase_suspended = 0;
 	chip->in_progress_block_addr = adr;
-
+	
 	cfi_spin_unlock(chip->mutex);
 	msleep(chip->erase_time/2);
 	cfi_spin_lock(chip->mutex);
@@ -1310,16 +1310,16 @@ static inline int do_erase_oneblock(struct map_info *map, struct flchip *chip, u
 		schedule_timeout(1);
 		cfi_spin_lock(chip->mutex);
 	}
-
+	
 	printk(KERN_WARNING "MTD %s(): software timeout\n",
-			__func__ );
-
+	       __func__ );
+	
 	/* reset on all failures. */
 	map_write( map, CMD(0xF0), chip->start );
 	/* FIXME - should have reset delay before continuing */
 
 	ret = -EIO;
-op_done:
+ op_done:
 	chip->state = FL_READY;
 	put_chip(map, chip, adr);
 	cfi_spin_unlock(chip->mutex);
@@ -1342,7 +1342,7 @@ int cfi_amdstd_erase_varsize(struct mtd_info *mtd, struct erase_info *instr)
 
 	instr->state = MTD_ERASE_DONE;
 	mtd_erase_callback(instr);
-
+	
 	return 0;
 }
 
@@ -1365,7 +1365,7 @@ static int cfi_amdstd_erase_chip(struct mtd_info *mtd, struct erase_info *instr)
 
 	instr->state = MTD_ERASE_DONE;
 	mtd_erase_callback(instr);
-
+	
 	return 0;
 }
 
@@ -1382,35 +1382,35 @@ static void cfi_amdstd_sync (struct mtd_info *mtd)
 	for (i=0; !ret && i<cfi->numchips; i++) {
 		chip = &cfi->chips[i];
 
-retry:
+	retry:
 		cfi_spin_lock(chip->mutex);
 
 		switch(chip->state) {
-			case FL_READY:
-			case FL_STATUS:
-			case FL_CFI_QUERY:
-			case FL_JEDEC_QUERY:
-				chip->oldstate = chip->state;
-				chip->state = FL_SYNCING;
-				/* No need to wake_up() on this state change - 
-				 * as the whole point is that nobody can do anything
-				 * with the chip now anyway.
-				 */
-			case FL_SYNCING:
-				cfi_spin_unlock(chip->mutex);
-				break;
+		case FL_READY:
+		case FL_STATUS:
+		case FL_CFI_QUERY:
+		case FL_JEDEC_QUERY:
+			chip->oldstate = chip->state;
+			chip->state = FL_SYNCING;
+			/* No need to wake_up() on this state change - 
+			 * as the whole point is that nobody can do anything
+			 * with the chip now anyway.
+			 */
+		case FL_SYNCING:
+			cfi_spin_unlock(chip->mutex);
+			break;
 
-			default:
-				/* Not an idle state */
-				add_wait_queue(&chip->wq, &wait);
+		default:
+			/* Not an idle state */
+			add_wait_queue(&chip->wq, &wait);
+			
+			cfi_spin_unlock(chip->mutex);
 
-				cfi_spin_unlock(chip->mutex);
+			schedule();
 
-				schedule();
-
-				remove_wait_queue(&chip->wq, &wait);
-
-				goto retry;
+			remove_wait_queue(&chip->wq, &wait);
+			
+			goto retry;
 		}
 	}
 
@@ -1420,7 +1420,7 @@ retry:
 		chip = &cfi->chips[i];
 
 		cfi_spin_lock(chip->mutex);
-
+		
 		if (chip->state == FL_SYNCING) {
 			chip->state = chip->oldstate;
 			wake_up(&chip->wq);
@@ -1444,22 +1444,22 @@ static int cfi_amdstd_suspend(struct mtd_info *mtd)
 		cfi_spin_lock(chip->mutex);
 
 		switch(chip->state) {
-			case FL_READY:
-			case FL_STATUS:
-			case FL_CFI_QUERY:
-			case FL_JEDEC_QUERY:
-				chip->oldstate = chip->state;
-				chip->state = FL_PM_SUSPENDED;
-				/* No need to wake_up() on this state change - 
-				 * as the whole point is that nobody can do anything
-				 * with the chip now anyway.
-				 */
-			case FL_PM_SUSPENDED:
-				break;
+		case FL_READY:
+		case FL_STATUS:
+		case FL_CFI_QUERY:
+		case FL_JEDEC_QUERY:
+			chip->oldstate = chip->state;
+			chip->state = FL_PM_SUSPENDED;
+			/* No need to wake_up() on this state change - 
+			 * as the whole point is that nobody can do anything
+			 * with the chip now anyway.
+			 */
+		case FL_PM_SUSPENDED:
+			break;
 
-			default:
-				ret = -EAGAIN;
-				break;
+		default:
+			ret = -EAGAIN;
+			break;
 		}
 		cfi_spin_unlock(chip->mutex);
 	}
@@ -1471,7 +1471,7 @@ static int cfi_amdstd_suspend(struct mtd_info *mtd)
 			chip = &cfi->chips[i];
 
 			cfi_spin_lock(chip->mutex);
-
+		
 			if (chip->state == FL_PM_SUSPENDED) {
 				chip->state = chip->oldstate;
 				wake_up(&chip->wq);
@@ -1479,7 +1479,7 @@ static int cfi_amdstd_suspend(struct mtd_info *mtd)
 			cfi_spin_unlock(chip->mutex);
 		}
 	}
-
+	
 	return ret;
 }
 
@@ -1492,11 +1492,11 @@ static void cfi_amdstd_resume(struct mtd_info *mtd)
 	struct flchip *chip;
 
 	for (i=0; i<cfi->numchips; i++) {
-
+	
 		chip = &cfi->chips[i];
 
 		cfi_spin_lock(chip->mutex);
-
+		
 		if (chip->state == FL_PM_SUSPENDED) {
 			chip->state = FL_READY;
 			map_write(map, CMD(0xF0), chip->start);

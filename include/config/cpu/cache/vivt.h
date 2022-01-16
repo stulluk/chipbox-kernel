@@ -1,1 +1,0 @@
-#define CONFIG_CPU_CACHE_VIVT 1

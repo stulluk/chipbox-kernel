@@ -681,7 +681,7 @@ static void soc_pcmcia_cpufreq_unregister(void)
 #define soc_pcmcia_cpufreq_unregister()
 #endif
 
-int  soc_common_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops, int first, int nr)
+int soc_common_drv_pcmcia_probe(struct device *dev, struct pcmcia_low_level *ops, int first, int nr)
 {
 	struct skt_dev_info *sinfo;
 	struct soc_pcmcia_socket *skt;

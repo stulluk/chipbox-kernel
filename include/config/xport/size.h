@@ -1,1 +1,0 @@
-#define CONFIG_XPORT_SIZE 0x600000

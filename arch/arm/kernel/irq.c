@@ -711,6 +711,7 @@ int setup_irq(unsigned int irq, struct irqaction *new)
 			desc->chip->unmask(irq);
 		}
 	}
+
 	spin_unlock_irqrestore(&irq_controller_lock, flags);
 	return 0;
 }
@@ -751,7 +752,7 @@ int request_irq(unsigned int irq, irqreturn_t (*handler)(int, void *, struct pt_
 {
 	unsigned long retval;
 	struct irqaction *action;
-	
+
 	if (irq >= NR_IRQS || !irq_desc[irq].valid || !handler ||
 	    (irq_flags & SA_SHIRQ && !dev_id))
 		return -EINVAL;
@@ -765,8 +766,10 @@ int request_irq(unsigned int irq, irqreturn_t (*handler)(int, void *, struct pt_
 	cpus_clear(action->mask);
 	action->name = devname;
 	action->next = NULL;
-	action->dev_id = dev_id;  
+	action->dev_id = dev_id;
+
 	retval = setup_irq(irq, action);
+
 	if (retval)
 		kfree(action);
 	return retval;

@@ -1,1 +1,0 @@
-#define CONFIG_ORION_I2C_1201 1

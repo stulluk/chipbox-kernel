@@ -2245,7 +2245,7 @@ int nand_scan (struct mtd_info *mtd, int maxchips)
 
 			printk("Debug Info: oobsize=%d\n",mtd->oobsize);
 
-            extid >>= 2;
+			extid >>= 2;
 			/* Calc blocksize. Blocksize is multiples of 64KiB */
 			mtd->erasesize = (64 * 1024)  << (extid & 0x03);
 			extid >>= 2;

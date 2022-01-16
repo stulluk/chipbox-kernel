@@ -436,7 +436,7 @@ static void s3c2410_nand_write_buf(struct mtd_info *mtd,
 }
 
 /* device management functions */
-:
+
 static int s3c2410_nand_remove(struct device *dev)
 {
 	struct s3c2410_nand_info *info = to_nand_info(dev);
