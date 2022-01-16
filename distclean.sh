@@ -2,4 +2,4 @@
 
 docker run -it -v $(pwd):/chipbox-kernel stulluk/chipbox-docker-builder \
 /bin/bash -c "cd /chipbox-kernel \
-&& make clean && make -j16 uImage"
+&& make distclean"
